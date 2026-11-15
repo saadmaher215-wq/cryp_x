@@ -105,7 +105,7 @@ export default function CrypXEnterpriseSignUp() {
     checkConnection();
   }, []);
 
-  useEffect(() => {
+    useEffect(() => {
     const clean = username.trim().toLowerCase();
     setUsernameSuggestions([]);
 
@@ -119,16 +119,23 @@ export default function CrypXEnterpriseSignUp() {
       return;
     }
 
+    let cancelled = false;
     setUsernameStatus('checking');
+
     const timeout = setTimeout(async () => {
       try {
-        const { data } = await supabase
-          .from('users')
-          .select('id')
-          .ilike('username', clean)
-          .maybeSingle();
+        const { data, error } = await supabase.rpc('check_availability', {
+          check_username: clean,
+        });
 
-        if (data) {
+        if (cancelled) return;
+
+        if (error || !data) {
+          setUsernameStatus('available');
+          return;
+        }
+
+        if (data.username_taken) {
           setUsernameStatus('taken');
           const num = Math.floor(10 + Math.random() * 89);
           setUsernameSuggestions([
@@ -140,11 +147,14 @@ export default function CrypXEnterpriseSignUp() {
           setUsernameStatus('available');
         }
       } catch {
-        setUsernameStatus('idle');
+        if (!cancelled) setUsernameStatus('available');
       }
-    }, 450);
+    }, 350);
 
-    return () => clearTimeout(timeout);
+    return () => {
+      cancelled = true;
+      clearTimeout(timeout);
+    };
   }, [username]);
 
   useEffect(() => {
@@ -163,22 +173,32 @@ export default function CrypXEnterpriseSignUp() {
       return;
     }
 
+    let cancelled = false;
     setEmailStatus('checking');
+
     const timeout = setTimeout(async () => {
       try {
-        const { data } = await supabase
-          .from('users')
-          .select('id')
-          .ilike('email', clean)
-          .maybeSingle();
+        const { data, error } = await supabase.rpc('check_availability', {
+          check_email: clean,
+        });
 
-        setEmailStatus(data ? 'taken' : 'available');
+        if (cancelled) return;
+
+        if (error || !data) {
+          setEmailStatus('available');
+          return;
+        }
+
+        setEmailStatus(data.email_taken ? 'taken' : 'available');
       } catch {
-        setEmailStatus('idle');
+        if (!cancelled) setEmailStatus('available');
       }
-    }, 500);
+    }, 400);
 
-    return () => clearTimeout(timeout);
+    return () => {
+      cancelled = true;
+      clearTimeout(timeout);
+    };
   }, [email]);
 
   useEffect(() => {
