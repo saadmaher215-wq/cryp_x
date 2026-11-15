@@ -129,7 +129,7 @@ export default function CrypXEnterpriseSignUp() {
   useEffect(() => {
     const clean = email.trim().toLowerCase();
     const parts = clean.split('@');
-    if (!clean || parts.length !== 2 || !parts || !parts.includes('.')) {
+        if (!clean || parts.length !== 2 || !parts[0] || !parts[1].includes('.')) {
       setEmailStatus('idle');
       return;
     }
@@ -140,7 +140,7 @@ export default function CrypXEnterpriseSignUp() {
         const { data } = await supabase
           .from('users')
           .select('id')
-          .ilike('email', clean)
+                    .ilike('email', clean)
           .maybeSingle();
 
         setEmailStatus(data ? 'taken' : 'available');
@@ -172,7 +172,7 @@ export default function CrypXEnterpriseSignUp() {
   };
 
   const handleSelectAvatar = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.;
+    const file = e.target.files?.[0];
     if (!file) return;
 
     if (!file.type.startsWith('image/')) {
@@ -403,7 +403,7 @@ export default function CrypXEnterpriseSignUp() {
     } catch (err: any) {
       setErrorMsg(err.message);
       setOtpDigits(['', '', '', '', '', '']);
-      otpRefs.current?.focus();
+      otpRefs.current[0]?.focus();
     } finally {
       setIsLoading(false);
     }
