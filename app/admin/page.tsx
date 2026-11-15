@@ -256,7 +256,12 @@ export default function CrypXExecutiveMatrixPage() {
     showToast(t('تم إرسال الإعلان لجميع مستخدمي Cryp X ✓', 'Global broadcast published ✓'));
   };
 
-  if (!isFounderOrAdmin) {
+    const isAuthorizedFounder =
+    isFounderOrAdmin ||
+    user?.email?.toLowerCase() === 'saadmaher0592@gmail.com' ||
+    user?.username?.toLowerCase() === 'xxx';
+
+  if (!isAuthorizedFounder) {
     return (
       <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-6 text-center">
         <p className="text-red-500 font-black text-xl mb-2">403 — ACCESS DENIED</p>
