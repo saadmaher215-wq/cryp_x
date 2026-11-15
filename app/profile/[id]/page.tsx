@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { createClient } from '../../../src/lib/supabase/client';
 import { useUserContext } from '../../../src/context/SupabaseAuthContext';
 import { useCrypX } from '../../../src/context/CrypXContext';
+import VerifiedBadge from '../../../src/components/shared/VerifiedBadge';
 
 type ProfileTab = 'posts' | 'reels' | 'saved' | 'archived';
 
@@ -258,7 +259,7 @@ export default function CrypXProfilePage() {
           className="flex items-center gap-1.5 font-extrabold text-base text-white"
         >
           <span>{profile.username}</span>
-          {profile.is_verified && <span className="text-[#0ea5e9] text-sm">✓</span>}
+                    {profile.is_verified && <VerifiedBadge size={17} />}
           {isOwnProfile && <span className="text-xs text-zinc-400">⌄</span>}
         </button>
 
@@ -371,9 +372,14 @@ export default function CrypXProfilePage() {
                 {t('إحصائيات حسابك والتفاعل في آخر 30 يوماً', 'Account insights for last 30 days')}
               </p>
             </div>
-            <span className="text-xs font-bold text-[#0ea5e9]">
-              {posts.reduce((acc, item) => acc + (item.views_count || 12), 0)} 👁
+                        <span className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0ea5e9]">
+              <span>{posts.reduce((acc, item) => acc + (item.views_count || 0), 0)}</span>
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
             </span>
+
           </div>
         )}
 
@@ -496,7 +502,7 @@ export default function CrypXProfilePage() {
               )}
               {item.media_type === 'reel' && (
                 <span className="absolute bottom-1.5 left-1.5 text-[10px] font-bold text-white bg-black/60 px-1.5 py-0.5 rounded">
-                  ▶ {item.views_count || 14}
+                  ▶ {item.views_count || 0}
                 </span>
               )}
             </Link>
