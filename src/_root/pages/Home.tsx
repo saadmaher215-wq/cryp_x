@@ -303,7 +303,7 @@ export default function CrypXHomeFeed() {
     await supabase.from('messages').insert({
       sender_id: user.id,
       receiver_id: story.user_id,
-      content: `${t('رد على قصتك:', 'Replied to your story:')} ${msg}`,
+            content: `${t('رد على قصتك:', 'Replied to your story:')} ${msg}`,
     });
 
     setTimeout(() => setStoryReplySent(false), 2000);
