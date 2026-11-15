@@ -529,7 +529,8 @@ export default function CrypXHomeFeed() {
                       onClick={() => openCommentsModal(post)}
                       className="text-[11px] text-zinc-500 pt-0.5 block"
                     >
-                      {t('عرض التعليقات أو إضافة تعليق...', 'View or add comments...')}
+                                            {t('عرض التعليقات أو إضافة تعليق...', 'View or add comments...')}
+                    </button>
 
                                         )}
                 </div>
@@ -547,7 +548,8 @@ export default function CrypXHomeFeed() {
               <img
                 src={
                   activeStory.user?.image_url ||
-                  'https://ui-avatars.com'
+                                    'https://ui-avatars.com'
+
                 }
                 alt="Story User"
                 className="w-9 h-9 rounded-full object-cover border border-white/30"
