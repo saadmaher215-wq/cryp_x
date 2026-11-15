@@ -56,7 +56,7 @@ export default function CrypXCreateStudio() {
     if (isPublishing) return;
 
     if (!selectedFile) {
-      setErrorMsg(t('يرجى اختيار صورة أو فيديو أولاً.', 'Please select an image or video first.'));
+            setErrorMsg(t('يرجى اختيار صورة أو فيديو أولاً.', 'Please select a file first.'));
       return;
     }
 
