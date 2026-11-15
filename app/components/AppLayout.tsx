@@ -235,6 +235,30 @@ function CrypXShell({ children }: { children: React.ReactNode }) {
           </svg>
         </Link>
 
-        {/* 5. الملف الشخصي */}
+                {/* 5. الملف الشخصي */}
         <Link
           href={user?.id ? `/profile/${user.id}` : '/sign-in'}
+          className="p-1.5 rounded-full"
+        >
+          <img
+            src={avatarUrl}
+            alt="Profile"
+            className={`w-7 h-7 rounded-full object-cover border-2 ${
+              pathname?.startsWith('/profile') ? 'border-[#0ea5e9]' : 'border-zinc-700'
+            }`}
+          />
+        </Link>
+      </nav>
+    </div>
+  );
+}
+
+export default function AppLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <AuthProvider>
+      <CrypXProvider>
+        <CrypXShell>{children}</CrypXShell>
+      </CrypXProvider>
+    </AuthProvider>
+  );
+}
