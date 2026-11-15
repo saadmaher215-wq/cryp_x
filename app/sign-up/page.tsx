@@ -269,8 +269,7 @@ export default function CrypXEnterpriseSignUp() {
   };
 
   const uploadAvatarToStorage = async (userId: string, displayName: string): Promise<string> => {
-    const fallback = `https://ui-avatars.com{encodeURIComponent(displayName)}&background=0ea5e9&color=fff&bold=true&size=256`;
-
+        const fallback = 'https://ui-avatars.com/api/?background=0ea5e9&color=fff&bold=true&size=256&name=' + encodeURIComponent(displayName);
     if (!avatarFile) return fallback;
 
     try {
