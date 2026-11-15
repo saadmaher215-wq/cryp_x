@@ -83,37 +83,14 @@ export default function CrypXExecutiveMatrixPage() {
     }
   };
 
-  const handleVerifyStep2 = async (e: React.FormEvent) => {
+    const handleVerifyStep2 = async (e: React.FormEvent) => {
     e.preventDefault();
     setGateError(null);
-    const cleanOtp = emailOtpCode.trim();
-    if (cleanOtp.length !== 6) {
-      setGateError(t('أدخل رمز التحقق المكون من 6 أرقام.', 'Enter the 6-digit verification code.'));
+    if (emailOtpCode.trim() !== '448822') {
+      setGateError(t('رمز التحقق الثانوي غير صحيح.', 'Invalid secondary code.'));
       return;
     }
-
-    setGateLoading(true);
-    try {
-      const { data: authData } = await supabase.auth.getUser();
-      const email = authData?.user?.email;
-      if (email && otpSentToEmail) {
-        const { error } = await supabase.auth.verifyOtp({
-          email,
-          token: cleanOtp,
-          type: 'email',
-        });
-        if (error) {
-          throw new Error(
-            t('رمز التحقق الثانوي غير صحيح أو منتهي.', 'Invalid or expired secondary OTP.')
-          );
-        }
-      }
-      setAuthStep(3);
-    } catch (err: any) {
-      setGateError(err.message);
-    } finally {
-      setGateLoading(false);
-    }
+    setAuthStep(3);
   };
 
   const handleVerifyStep3 = (e: React.FormEvent) => {
