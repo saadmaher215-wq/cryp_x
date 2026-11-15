@@ -9,7 +9,7 @@ import { CrypXProvider, useCrypX } from '../../src/context/CrypXContext';
 function CrypXShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, isAuthenticated, isLoading } = useUserContext();
+    const { user } = useUserContext();
   const {
     lang,
     toggleLang,
