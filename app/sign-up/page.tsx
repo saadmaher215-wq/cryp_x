@@ -25,12 +25,23 @@ const DOMAIN_TYPOS: Record<string, string> = {
   'outlok.com': 'outlook.com',
 };
 
+const BLOCKED_TEMP_DOMAINS = new Set([
+  'tempmail.com',
+  '10minutemail.com',
+  'guerrillamail.com',
+  'mailinator.com',
+  'throwawaymail.com',
+  'yopmail.com',
+  'fakeinbox.com',
+]);
+
 export default function CrypXEnterpriseSignUp() {
   const router = useRouter();
 
   const [mounted, setMounted] = useState(false);
   const [step, setStep] = useState<SignUpStep>('details');
   const [serverPing, setServerPing] = useState<number | null>(null);
+  const [detectedRegion, setDetectedRegion] = useState<string>('Global');
 
   const [fullName, setFullName] = useState('');
   const [username, setUsername] = useState('');
@@ -54,6 +65,7 @@ export default function CrypXEnterpriseSignUp() {
 
   const [otpDigits, setOtpDigits] = useState<string[]>(['', '', '', '', '', '']);
   const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const [otpExpirySeconds, setOtpExpirySeconds] = useState(0);
   const [resendSeconds, setResendSeconds] = useState(0);
 
   const [isLoading, setIsLoading] = useState(false);
@@ -69,6 +81,15 @@ export default function CrypXEnterpriseSignUp() {
       const refParam = params.get('ref');
       if (refParam) {
         setReferralCode(refParam.replace(/[^a-zA-Z0-9_]/g, '').slice(0, 20));
+      }
+      try {
+        const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        if (tz) {
+          const city = tz.split('/').pop()?.replace(/_/g, ' ');
+          if (city) setDetectedRegion(city);
+        }
+      } catch {
+        setDetectedRegion('Global');
       }
     }
 
@@ -129,8 +150,16 @@ export default function CrypXEnterpriseSignUp() {
   useEffect(() => {
     const clean = email.trim().toLowerCase();
     const parts = clean.split('@');
-        if (!clean || parts.length !== 2 || !parts[0] || !parts[1].includes('.')) {
+    const localPart = parts.at(0);
+    const domainPart = parts.at(1);
+
+    if (!clean || parts.length !== 2 || !localPart || !domainPart || !domainPart.includes('.')) {
       setEmailStatus('idle');
+      return;
+    }
+
+    if (BLOCKED_TEMP_DOMAINS.has(domainPart)) {
+      setEmailStatus('invalid');
       return;
     }
 
@@ -140,7 +169,7 @@ export default function CrypXEnterpriseSignUp() {
         const { data } = await supabase
           .from('users')
           .select('id')
-                    .ilike('email', clean)
+          .ilike('email', clean)
           .maybeSingle();
 
         setEmailStatus(data ? 'taken' : 'available');
@@ -151,6 +180,14 @@ export default function CrypXEnterpriseSignUp() {
 
     return () => clearTimeout(timeout);
   }, [email]);
+
+  useEffect(() => {
+    if (otpExpirySeconds <= 0) return;
+    const timer = setInterval(() => {
+      setOtpExpirySeconds((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [otpExpirySeconds]);
 
   useEffect(() => {
     if (resendSeconds <= 0) return;
@@ -172,7 +209,7 @@ export default function CrypXEnterpriseSignUp() {
   };
 
   const handleSelectAvatar = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+    const file = e.target.files?.item(0);
     if (!file) return;
 
     if (!file.type.startsWith('image/')) {
@@ -197,13 +234,13 @@ export default function CrypXEnterpriseSignUp() {
     const pool = upper + lower + nums + syms;
 
     let pwd =
-      upper[Math.floor(Math.random() * upper.length)] +
-      lower[Math.floor(Math.random() * lower.length)] +
-      nums[Math.floor(Math.random() * nums.length)] +
-      syms[Math.floor(Math.random() * syms.length)];
+      upper.charAt(Math.floor(Math.random() * upper.length)) +
+      lower.charAt(Math.floor(Math.random() * lower.length)) +
+      nums.charAt(Math.floor(Math.random() * nums.length)) +
+      syms.charAt(Math.floor(Math.random() * syms.length));
 
     for (let i = 0; i < 10; i++) {
-      pwd += pool[Math.floor(Math.random() * pool.length)];
+      pwd += pool.charAt(Math.floor(Math.random() * pool.length));
     }
 
     const finalPwd = pwd
@@ -232,7 +269,7 @@ export default function CrypXEnterpriseSignUp() {
   };
 
   const uploadAvatarToStorage = async (userId: string, displayName: string): Promise<string> => {
-        const fallback = `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=0ea5e9&color=fff&bold=true&size=256`;
+    const fallback = `https://ui-avatars.com{encodeURIComponent(displayName)}&background=0ea5e9&color=fff&bold=true&size=256`;
 
     if (!avatarFile) return fallback;
 
@@ -301,6 +338,10 @@ export default function CrypXEnterpriseSignUp() {
       setErrorMsg('اسم المستخدم محجوز بالفعل، اختر اسماً آخر.');
       return;
     }
+    if (emailStatus === 'invalid') {
+      setErrorMsg('عناوين البريد المؤقتة غير مسموحة. استخدم بريداً حقيقياً (Gmail, Outlook, iCloud).');
+      return;
+    }
     if (!cleanEmail.includes('@') || emailStatus === 'taken') {
       setErrorMsg(
         emailStatus === 'taken'
@@ -357,7 +398,8 @@ export default function CrypXEnterpriseSignUp() {
       }
 
       setOtpDigits(['', '', '', '', '', '']);
-      setResendSeconds(60);
+      setOtpExpirySeconds(60);
+      setResendSeconds(90);
       setStep('verify-otp');
       setSuccessMsg(`تم إرسال رمز التحقق المكون من 6 أرقام إلى ${cleanEmail}`);
     } catch (err: any) {
@@ -387,7 +429,7 @@ export default function CrypXEnterpriseSignUp() {
       });
 
       if (error || !data.user) {
-        throw new Error('رمز التحقق غير صحيح أو منتهي الصلاحية. تأكد من الأرقام الستة.');
+        throw new Error('رمز التحقق غير صحيح أو انتهت مدته (60 ثانية). اطلب رمزاً جديداً.');
       }
 
       await createUserRecord(data.user.id, cleanName, cleanUser, cleanEmail, cleanBio);
@@ -401,7 +443,7 @@ export default function CrypXEnterpriseSignUp() {
     } catch (err: any) {
       setErrorMsg(err.message);
       setOtpDigits(['', '', '', '', '', '']);
-      otpRefs.current[0]?.focus();
+      otpRefs.current.at(0)?.focus();
     } finally {
       setIsLoading(false);
     }
@@ -454,8 +496,9 @@ export default function CrypXEnterpriseSignUp() {
         type: 'signup',
         email: email.trim().toLowerCase(),
       });
-      setResendSeconds(60);
-      setSuccessMsg('تم إرسال رمز تحقق جديد مكون من 6 أرقام إلى بريدك.');
+      setOtpExpirySeconds(60);
+      setResendSeconds(90);
+      setSuccessMsg('تم إرسال رمز تحقق جديد (صالح لمدة 60 ثانية) إلى بريدك.');
     } catch {
       setErrorMsg('تعذر إعادة إرسال الرمز حالياً، انتظر قليلاً.');
     } finally {
@@ -491,11 +534,10 @@ export default function CrypXEnterpriseSignUp() {
               Cryp <span className="text-[#0ea5e9]">X</span>
             </span>
           </div>
-          {serverPing && (
-            <span className="text-[11px] font-mono text-zinc-400 bg-zinc-900 border border-zinc-800 px-2.5 py-1 rounded-full">
-              {serverPing}ms ●
-            </span>
-          )}
+          <div className="flex items-center gap-2 text-[11px] font-mono text-zinc-400 bg-zinc-900 border border-zinc-800 px-3 py-1 rounded-full">
+            <span>{detectedRegion}</span>
+            {serverPing && <span className="text-emerald-400">· {serverPing}ms</span>}
+          </div>
         </div>
 
         <div className="relative z-10 space-y-6 max-w-md">
@@ -681,6 +723,9 @@ export default function CrypXEnterpriseSignUp() {
                   {emailStatus === 'taken' && (
                     <span className="text-[11px] text-red-400">مسجل مسبقاً</span>
                   )}
+                  {emailStatus === 'invalid' && (
+                    <span className="text-[11px] text-amber-400">بريد مؤقت غير مسموح</span>
+                  )}
                 </div>
                 <input
                   type="email"
@@ -759,7 +804,7 @@ export default function CrypXEnterpriseSignUp() {
                 {password && (
                   <div className="mt-2 space-y-1.5">
                     <div className="flex gap-1">
-                      {[1, 2, 3, 4].map((lvl) => (
+                      {Array.from({ length: 4 }, (_, i) => i + 1).map((lvl) => (
                         <div
                           key={lvl}
                           className={`h-1 flex-1 rounded-full transition-colors ${
@@ -775,7 +820,6 @@ export default function CrypXEnterpriseSignUp() {
                       ))}
                     </div>
                     <div className="flex flex-wrap gap-2.5 text-[10px] text-zinc-500">
-                      <span className={strength.rules.length ? 'text-emerald-400' : ''}>✓ 8+ أحرف</span>
                       <span className={strength.rules.length ? 'text-emerald-400' : ''}>✓ 8+ أحرف</span>
                       <span className={strength.rules.upper ? 'text-emerald-400' : ''}>✓ حرف كبير</span>
                       <span className={strength.rules.number ? 'text-emerald-400' : ''}>✓ رقم</span>
@@ -837,6 +881,15 @@ export default function CrypXEnterpriseSignUp() {
                     {email}
                   </span>
                 </p>
+                <div className="mt-2 inline-flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 px-3 py-1 rounded-full text-[11px]">
+                  {otpExpirySeconds > 0 ? (
+                    <span className="text-emerald-400 font-mono">
+                      صلاحية الرمز تنتهي خلال: {otpExpirySeconds} ثانية
+                    </span>
+                  ) : (
+                    <span className="text-red-400">انتهت صلاحية الرمز، اطلب رمزاً جديداً</span>
+                  )}
+                </div>
               </div>
 
               <div dir="ltr" onPaste={handleOtpPaste} className="grid grid-cols-6 gap-2 my-4">
@@ -873,7 +926,9 @@ export default function CrypXEnterpriseSignUp() {
                   disabled={resendSeconds > 0}
                   className="text-[#0ea5e9] disabled:text-zinc-500 hover:underline"
                 >
-                  {resendSeconds > 0 ? `إعادة الإرسال بعد ${resendSeconds} ثانية` : 'إعادة إرسال الرمز'}
+                  {resendSeconds > 0
+                    ? `إعادة الإرسال بعد ${resendSeconds} ثانية (دقيقة ونصف)`
+                    : 'إعادة إرسال الرمز'}
                 </button>
                 <button
                   type="button"
