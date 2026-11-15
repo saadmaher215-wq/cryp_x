@@ -3,11 +3,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+import { createClient } from '../../src/lib/supabase/client';
+const supabase = createClient();
 
 type AuthMode = 'password' | 'otp' | 'forgot';
 
@@ -176,6 +173,9 @@ export default function CrypXEnterpriseSignIn() {
       }
 
       setSuccessMsg('تم تسجيل الدخول بنجاح! جاري التوجيه إلى Cryp X...');
+          localStorage.setItem('socialens_auth', 'true');
+      localStorage.setItem('socialens_user', JSON.stringify({ id: data.user.id, email: data.user.email, name: accountPreview?.name || 'User' }));
+  
       setTimeout(() => {
         router.push('/');
         router.refresh();
