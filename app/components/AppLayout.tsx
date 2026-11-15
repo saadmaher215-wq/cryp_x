@@ -85,15 +85,7 @@ function CrypXShell({ children }: { children: React.ReactNode }) {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
           </button>
-
-          {isFounderOrAdmin && (
-            <Link
-              href="/admin"
-              className="px-2.5 py-1 rounded-lg bg-[#0ea5e9]/15 border border-[#0ea5e9]/40 text-[#38bdf8] text-[11px] font-bold tracking-wide hover:bg-[#0ea5e9]/25 transition-colors"
-            >
-              {t('غرفة القيادة', 'MATRIX')}
-            </Link>
-          )}
+          
         </div>
 
         {/* المنتصف: شعار Cryp X الرسمي */}
@@ -186,7 +178,7 @@ function CrypXShell({ children }: { children: React.ReactNode }) {
       <main className="flex-1 w-full max-w-2xl mx-auto pb-20">{children}</main>
 
       {/* الشريط السفلي النظيف (5 أيقونات مطابقة لإنستغرام) */}
-      <nav className="fixed bottom-0 inset-x-0 z-40 h-14 bg-[#000000]/95 backdrop-blur-md border-t border-zinc-900 px-2 flex items-center justify-around">
+      <nav className="fixed bottom-0 inset-x-0 z-50 h-14 bg-[#000000]/95 backdrop-blur-md border-t border-zinc-900 px-2 flex items-center justify-around">
         {/* 1. الرئيسية */}
         <Link
           href="/"
